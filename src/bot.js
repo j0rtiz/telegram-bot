@@ -35,7 +35,7 @@ bot.on("voice", async (ctx) => {
   await sendVoice(bucketName, voiceFileName, data);
   await transcribeVoice(bucketName, voiceFileName, transcriptionFileName);
 
-  const text = await getText(transcriptionFileName);
+  const text = await getText(bucketName, transcriptionFileName);
 
   return ctx.reply(text);
 });
@@ -89,6 +89,6 @@ async function getText(bucketName, fileName) {
 
     return data.results.transcripts[0].transcript;
   } catch (error) {
-    return getText(bucketName, `${fileName}.json`);
+    return getText(bucketName, fileName);
   }
 }
