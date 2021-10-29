@@ -9,6 +9,9 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@aws-sdk/client-transcribe": "^3.39.0",
+    "aws-sdk": "^2.1017.0",
+    "axios": "^0.24.0",
     "telegraf": "^4.4.2"
   },
   "devDependencies": {
