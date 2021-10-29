@@ -33,7 +33,7 @@ bot.on("voice", async (ctx) => {
   const data = await getData(url.href);
 
   await sendVoice(bucketName, voiceFileName, data);
-  await transcribeVoice(bucketName, transcriptionFileName);
+  await transcribeVoice(bucketName, voiceFileName, transcriptionFileName);
 
   const text = await getText(transcriptionFileName);
 
@@ -63,11 +63,11 @@ async function sendVoice(bucketName, fileName, data) {
   }
 }
 
-async function transcribeVoice(bucketName, fileName) {
+async function transcribeVoice(bucketName, fileName, jobName) {
   try {
     const transcribeClient = new TranscribeClient();
     const params = {
-      TranscriptionJobName: fileName,
+      TranscriptionJobName: jobName,
       OutputBucketName: bucketName,
       LanguageCode: "pt-BR",
       Media: { MediaFileUri: `s3://${bucketName}/${fileName}` },
@@ -81,8 +81,6 @@ async function transcribeVoice(bucketName, fileName) {
 }
 
 async function getText(bucketName, fileName) {
-  let counter = 0;
-
   try {
     const s3 = new aws.S3();
     const params = { Bucket: bucketName, Key: `${fileName}.json` };
@@ -91,12 +89,6 @@ async function getText(bucketName, fileName) {
 
     return data.results.transcripts[0].transcript;
   } catch (error) {
-    if (counter < 30) {
-      counter++;
-
-      return getText(bucketName, `${fileName}.json`);
-    }
-
-    throw error;
+    return getText(bucketName, `${fileName}.json`);
   }
 }
