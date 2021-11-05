@@ -7,6 +7,47 @@ const token = process.env.TOKEN;
 const admin = process.env.ADMIN;
 const bot = new Telegraf(token);
 
+const ENUM = {
+  um: 1,
+  dois: 2,
+  tres: 3,
+  quatro: 4,
+  cinco: 5,
+  seis: 6,
+  sete: 7,
+  oito: 8,
+  nove: 9,
+  dez: 10,
+  onze: 11,
+  doze: 12,
+  treze: 13,
+  quatorze: 14,
+  quinze: 15,
+  dezesseis: 16,
+  dezessete: 17,
+  dezoito: 18,
+  dezenove: 19,
+  vinte: 20,
+  trinta: 30,
+  quarenta: 40,
+  cinquenta: 50,
+  sessenta: 60,
+  setenta: 70,
+  oitenta: 80,
+  noventa: 90,
+  cem: 100,
+  cento: 100,
+  duzentos: 200,
+  trezentos: 300,
+  quatrocentos: 400,
+  quinhentos: 500,
+  seiscentos: 600,
+  setecentos: 700,
+  oitocentos: 800,
+  novecentos: 900,
+  mil: 1000,
+};
+
 bot.start(async (ctx) => {
   const { first_name, id: user_id } = ctx.update.message.from;
 
@@ -36,8 +77,9 @@ bot.on("voice", async (ctx) => {
   await transcribeVoice(bucketName, voiceFileName, transcriptionFileName);
 
   const text = await getText(bucketName, transcriptionFileName);
+  const result = await getEvent(text);
 
-  return ctx.reply(text);
+  return ctx.reply(result);
 });
 
 bot.startPolling();
@@ -90,5 +132,35 @@ async function getText(bucketName, fileName) {
     return data.results.transcripts[0].transcript;
   } catch (error) {
     return getText(bucketName, fileName);
+  }
+}
+
+async function getEvent(text) {
+  try {
+    const cleaningRegex = /[^a-z\s]/gi;
+    const cleanText = text.normalize("NFD").replace(cleaningRegex, "");
+
+    const groupingRegex = /(?<action>cadastrar) (?<type>despesa) (?<category>combustivel) (?<value>.*)/;
+    const data = cleanText.match(groupingRegex).groups;
+    const arrayValue = data.value.replace(/ e /gi, " ").split(" ");
+
+    let comma = false;
+    let value = 0;
+
+    for (const key of arrayValue) {
+      if (!comma && ENUM[key]) {
+        value += ENUM[key];
+      } else if (comma && ENUM[key]) {
+        value += ENUM[key] / 100;
+      } else {
+        comma = true;
+      }
+    }
+
+    data.value = value.toFixed(2);
+
+    return JSON.stringify(data, null, 2);
+  } catch {
+    return "Não entendi!";
   }
 }
