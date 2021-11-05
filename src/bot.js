@@ -21,6 +21,7 @@ const ENUM = {
   onze: 11,
   doze: 12,
   treze: 13,
+  catorze: 14,
   quatorze: 14,
   quinze: 15,
   dezesseis: 16,
