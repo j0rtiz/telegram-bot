@@ -1,7 +1,7 @@
 const { TranscribeClient, StartTranscriptionJobCommand } = require("@aws-sdk/client-transcribe");
 const { Telegraf } = require("telegraf");
+const { S3 } = require("aws-sdk");
 const axios = require("axios");
-const aws = require("aws-sdk");
 
 const token = process.env.TOKEN;
 const admin = process.env.ADMIN;
@@ -80,6 +80,8 @@ bot.on("voice", async (ctx) => {
   const text = await getText(bucketName, transcriptionFileName);
   const result = await getEvent(text);
 
+  await cleanBucket(bucketName);
+
   return ctx.reply(result);
 });
 
@@ -98,7 +100,7 @@ async function getData(url) {
 async function sendVoice(bucketName, fileName, data) {
   try {
     const params = { Bucket: bucketName, Key: fileName, Body: data };
-    const s3 = new aws.S3.ManagedUpload({ params });
+    const s3 = new S3.ManagedUpload({ params });
 
     await s3.promise();
   } catch (error) {
@@ -125,7 +127,7 @@ async function transcribeVoice(bucketName, fileName, jobName) {
 
 async function getText(bucketName, fileName) {
   try {
-    const s3 = new aws.S3();
+    const s3 = new S3();
     const params = { Bucket: bucketName, Key: `${fileName}.json` };
     const response = await s3.getObject(params).promise();
     const data = JSON.parse(response.Body);
@@ -163,5 +165,18 @@ async function getEvent(text) {
     return JSON.stringify(data, null, 2);
   } catch {
     return "Não entendi!";
+  }
+}
+
+async function cleanBucket(bucketName) {
+  try {
+    const s3 = new S3();
+    const params = { Bucket: bucketName };
+    const { Contents } = await s3.listObjects(params).promise();
+    const objects = { Delete: { Objects: Contents.map(({ Key }) => ({ Key })) } };
+
+    await s3.deleteObjects({ ...params, ...objects }).promise();
+  } catch (error) {
+    throw error;
   }
 }
